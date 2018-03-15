@@ -18,9 +18,9 @@ import (
 	"os"
 	"os/exec"
 	"sync"
-	"sync/atomic"
 	"syscall"
 	"time"
+	"sync/atomic"
 )
 
 const (
@@ -176,58 +176,58 @@ type processesMap struct {
 // Start starts MachineProcess.
 func Start(newProcess MachineProcess) (MachineProcess, error) {
 	// wrap command to be able to kill child processes see https://github.com/golang/go/issues/8854
-	cmd := exec.Command("setsid", shellInterpreter, "-c", newProcess.CommandLine)
+	//cmd := exec.Command("setsid", shellInterpreter, "-c", newProcess.CommandLine)
 
 	// getting stdout pipe
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return newProcess, err
-	}
+	//stdout, err := cmd.StdoutPipe()
+	//if err != nil {
+	//	return newProcess, err
+	//}
 
 	// getting stderr pipe
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		return newProcess, err
-	}
+	//stderr, err := cmd.StderrPipe()
+	//if err != nil {
+	//	return newProcess, err
+	//}
 
 	// starting a new process
-	err = cmd.Start()
-	if err != nil {
-		return newProcess, err
-	}
+	//err := cmd.Start()
+	//if err != nil {
+	//	return newProcess, err
+	//}
 
 	// increment current pid & assign it to the value
 	pid := atomic.AddUint64(&prevPid, 1)
 
 	// set shared data
 	newProcess.Pid = pid
-	newProcess.Alive = true
-	newProcess.NativePid = cmd.Process.Pid
-	newProcess.ExitCode = -1
+	//newProcess.Alive = true
+	//newProcess.NativePid = cmd.Process.Pid
+	//newProcess.ExitCode = -1
 
 	// create an internal copy of the new process
 	internalProcess := newProcess
 
-	pumper := NewPumper(stdout, stderr)
-	fileLogger, err := newFileLogger(pid)
-	if err != nil {
-		return newProcess, err
-	}
+	//pumper := NewPumper(stdout, stderr)
+	//fileLogger, err := newFileLogger(pid)
+	//if err != nil {
+	//	return newProcess, err
+	//}
 
 	// set internal data
-	internalProcess.command = cmd
-	internalProcess.pumper = pumper
+	//internalProcess.command = cmd
+	//internalProcess.pumper = pumper
 	internalProcess.mutex = &sync.RWMutex{}
-	if fileLogger != nil {
-		internalProcess.fileLogger = fileLogger
-		internalProcess.logfileName = fileLogger.filename
-	}
+	//if fileLogger != nil {
+	//	internalProcess.fileLogger = fileLogger
+	//	internalProcess.logfileName = fileLogger.filename
+	//}
 
 	// register logs consumers
-	if fileLogger != nil {
-		pumper.AddConsumer(fileLogger)
-	}
-	pumper.AddConsumer(&internalProcess)
+	//if fileLogger != nil {
+	//	pumper.AddConsumer(fileLogger)
+	//}
+	//pumper.AddConsumer(&internalProcess)
 
 	// save(publish) process instance
 	processes.Lock()
@@ -246,10 +246,10 @@ func Start(newProcess MachineProcess) (MachineProcess, error) {
 	}()
 
 	// start pumping after start event is published 'pumper.Pump' is blocking
-	go func() {
-		<-startPublished
-		pumper.Pump()
-	}()
+	//go func() {
+	//	<-startPublished
+	//	pumper.Pump()
+	//}()
 
 	return newProcess, nil
 }

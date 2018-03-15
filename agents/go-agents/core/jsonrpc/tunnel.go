@@ -212,6 +212,7 @@ func (tun *Tunnel) NotifyBare(method string) error {
 // or response arrival timeout reached, in that case error of type
 // TimeoutError will be passed to the handler.
 func (tun *Tunnel) Request(method string, params interface{}, rhf RespHandleFunc) error {
+	log.Println("requst!!!")
 	marshaledParams, err := json.Marshal(params)
 	if err != nil {
 		return err
