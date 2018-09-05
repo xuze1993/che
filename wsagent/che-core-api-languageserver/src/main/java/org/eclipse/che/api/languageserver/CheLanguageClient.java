@@ -20,7 +20,9 @@ import org.eclipse.che.api.languageserver.shared.model.ExtendedPublishDiagnostic
 import org.eclipse.lsp4j.MessageActionItem;
 import org.eclipse.lsp4j.MessageParams;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
+import org.eclipse.lsp4j.RegistrationParams;
 import org.eclipse.lsp4j.ShowMessageRequestParams;
+import org.eclipse.lsp4j.UnregistrationParams;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,5 +86,17 @@ public class CheLanguageClient implements LanguageClient {
         LOG.debug(message.getMessage());
         break;
     }
+  }
+
+  @Override
+  public CompletableFuture<Void> registerCapability(RegistrationParams params) {
+    LOG.warn("Register capability feature unsupported at the moment");
+    return null;
+  }
+
+  @Override
+  public CompletableFuture<Void> unregisterCapability(UnregistrationParams params) {
+    LOG.warn("UnRegister capability feature unsupported at the moment");
+    return null;
   }
 }
