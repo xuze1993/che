@@ -133,6 +133,39 @@ public class NewWorkspace {
     String MULTI_MACHINE_BUTTON_ID = "multi-machine-button";
   }
 
+  public enum RhStacks {
+    JAVA_EAP("eap-default"),
+    JAVA_DEFAULT("java-default"),
+    VERTX("vert.x-default"),
+    SPRING_BOOT("spring-boot-default"),
+    WILD_FLY_SWARM("spring-boot-default"),
+    DOT_NET("dotnet-default"),
+    CPP("cpp-default"),
+    GO("go-default"),
+    JAVA_10("java10-default"),
+    NODE("node-default"),
+    PHP("php-default"),
+    PYTHON("python-default");
+
+    private String id;
+
+    RhStacks(String id) {
+      this.id = id;
+    }
+
+    public static RhStacks getById(String id) {
+      Optional<RhStacks> first =
+          asList(values()).stream().filter(stack -> stack.getId().equals(id)).findFirst();
+      first.orElseThrow(
+          () -> new RuntimeException(String.format("Stack with id '%s' not found.", id)));
+      return first.get();
+    }
+
+    public String getId() {
+      return this.id;
+    }
+  }
+
   public enum Stack {
     BLANK("blank-default"),
     JAVA("java-default"),
@@ -517,6 +550,11 @@ public class NewWorkspace {
     seleniumWebDriverHelper.waitAndClick(By.xpath(format(STACK_ROW_XPATH, stack.getId())));
   }
 
+  public void selectRhStack(RhStacks stack) {
+    waitRhStacks(asList(stack));
+    seleniumWebDriverHelper.waitAndClick(By.xpath(format(STACK_ROW_XPATH, stack.getId())));
+  }
+
   public boolean isCreateWorkspaceButtonEnabled() {
     return !Boolean.valueOf(
         seleniumWebDriverHelper.waitVisibilityAndGetAttribute(
@@ -742,6 +780,13 @@ public class NewWorkspace {
   }
 
   public void waitStacks(List<Stack> expectedStacks) {
+    expectedStacks.forEach(
+        stack ->
+            seleniumWebDriverHelper.waitPresence(
+                By.xpath(format("//div[@data-stack-id='%s']", stack.getId()))));
+  }
+
+  public void waitRhStacks(List<RhStacks> expectedStacks) {
     expectedStacks.forEach(
         stack ->
             seleniumWebDriverHelper.waitPresence(

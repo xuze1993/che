@@ -535,4 +535,11 @@ public class Wizard {
                         By.xpath("//label[text()='" + type.toString() + "']"))));
     item.click();
   }
+
+  public void createSamleFromList(String sample, String name) {
+    selectSample(sample);
+    typeProjectNameOnWizard(name);
+    clickCreateButton();
+    waitCreateProjectWizardFormIsClosed();
+  }
 }
