@@ -22,6 +22,12 @@
     <artifactId>che-core-api-devfile</artifactId>
     <packaging>jar</packaging>
     <name>Che Core :: API :: Devfile</name>
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
     <dependencies>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -48,8 +54,9 @@
             <artifactId>json-schema-core</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.github.java-json-tools</groupId>
-            <artifactId>json-schema-validator</artifactId>
+            <groupId>com.github.everit-org.json-schema</groupId>
+            <artifactId>org.everit.json.schema</artifactId>
+            <version>1.11.0</version>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
