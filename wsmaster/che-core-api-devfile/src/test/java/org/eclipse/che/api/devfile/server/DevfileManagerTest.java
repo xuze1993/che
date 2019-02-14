@@ -81,7 +81,7 @@ public class DevfileManagerTest {
 
   @Test(
       expectedExceptions = DevfileFormatException.class,
-      expectedExceptionsMessageRegExp = "Devfile schema validation failed. Errors: [\\w\\W]+")
+      expectedExceptionsMessageRegExp = "Devfile schema validation failed. Root error: \\[#: extraneous key \\[foos\\] is not permitted\\].$")
   public void shouldThrowExceptionWhenUnconvertableContentProvided() throws Exception {
     String yamlContent = getTestResource("devfile.yaml").concat("foos: bar");
 

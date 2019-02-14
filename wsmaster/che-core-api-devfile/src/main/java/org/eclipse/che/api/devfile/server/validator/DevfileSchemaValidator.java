@@ -13,7 +13,9 @@ package org.eclipse.che.api.devfile.server.validator;
 
 import java.io.IOException;
 import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -61,14 +63,23 @@ public class DevfileSchemaValidator {
     sb.append("].");
     if (!e.getCausingExceptions().isEmpty()) {
       sb.append("Nested errors: ");
-      //ODO: is it worth to flatten all ?
-      sb.append(e
-          .getCausingExceptions()
-          .stream()
-          .map(ValidationException::getMessage)
-          .collect(Collectors.joining(", ", "[", "]")));
+      List<String> messages = new ArrayList<>();
+      flatternExceptions(e, messages);
+      String msg = messages.stream().collect(Collectors.joining(",","[", "]"));
+      sb.append(msg);
     }
     return sb.toString();
+  }
+
+  private void flatternExceptions(ValidationException exception, List<String> messages) {
+    if (!exception.getCausingExceptions().isEmpty()) {
+      for (ValidationException ex : exception.getCausingExceptions()) {
+        flatternExceptions(ex, messages);
+      }
+    } else {
+      messages.add(exception.getMessage());
+    }
+
   }
 
   private Object wrapJsonObject(Object o) {

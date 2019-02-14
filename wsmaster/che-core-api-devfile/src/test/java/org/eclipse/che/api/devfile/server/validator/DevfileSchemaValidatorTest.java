@@ -66,60 +66,60 @@ public class DevfileSchemaValidatorTest {
       // Devfile model testing
       {
         "devfile/devfile_missing_name.yaml",
-        "Devfile schema validation failed. Errors: \\[object has missing required properties \\(\\[\"name\"\\]\\)\\]$"
+        "Devfile schema validation failed. Root error: \\[#: 5 schema violations found\\].Nested errors: \\[#: required key \\[name\\] not found,#/tools/0: required key \\[local\\] not found,#/tools/0: required key \\[image\\] not found,#/tools/0: required key \\[memoryLimit\\] not found,#/tools/0: required key \\[type\\] not found\\]$"
       },
       {
         "devfile/devfile_missing_spec_version.yaml",
-        "Devfile schema validation failed. Errors: \\[object has missing required properties \\(\\[\"specVersion\"\\]\\)\\]$"
+        "Devfile schema validation failed. Root error: \\[#: 5 schema violations found\\].Nested errors: \\[#: required key \\[specVersion\\] not found,#/tools/0: required key \\[local\\] not found,#/tools/0: required key \\[image\\] not found,#/tools/0: required key \\[memoryLimit\\] not found,#/tools/0: required key \\[type\\] not found\\]$"
       },
       {
         "devfile/devfile_with_undeclared_field.yaml",
-        "Devfile schema validation failed. Errors: \\[object instance has properties which are not allowed by the schema: \\[\"unknown\"\\]\\]$"
+        "Devfile schema validation failed. Root error: \\[#: extraneous key \\[unknown\\] is not permitted\\].$"
       },
       // Tool model testing
       {
         "tool/devfile_missing_tool_name.yaml",
-        "Devfile schema validation failed. Errors: \\[object has missing required properties \\(\\[\"name\"\\]\\)\\]$"
+        "Devfile schema validation failed. Root error: \\[#/tools/0: #: only 1 subschema matches out of 2\\].Nested errors: \\[#/tools/0: required key \\[name\\] not found\\]$"
       },
       {
         "tool/devfile_missing_tool_type.yaml",
-        "Devfile schema validation failed. Errors: \\[object has missing required properties \\(\\[\"type\"\\]\\)\\]$"
+        "Devfile schema validation failed. Root error: \\[#/tools/0: #: only 0 subschema matches out of 2\\].Nested errors: \\[#/tools/0: required key \\[local\\] not found,#/tools/0: required key \\[image\\] not found,#/tools/0: required key \\[memoryLimit\\] not found,#/tools/0: required key \\[type\\] not found]$"
       },
       {
         "tool/devfile_tool_with_undeclared_field.yaml",
-        "Devfile schema validation failed. Errors: \\[object instance has properties which are not allowed by the schema: \\[\"unknown\"\\]\\]$"
+        "Devfile schema validation failed. Root error: \\[#/tools/0: #: only 1 subschema matches out of 2\\].Nested errors: \\[#/tools/0: extraneous key \\[unknown\\] is not permitted\\]$"
       },
       // Command model testing
       {
         "command/devfile_missing_command_name.yaml",
-        "Devfile schema validation failed. Errors: \\[object has missing required properties \\(\\[\"name\"\\]\\)\\]$"
+        "Devfile schema validation failed. Root error: \\[#/commands/0: required key \\[name\\] not found\\].$"
       },
       {
         "command/devfile_missing_command_actions.yaml",
-        "Devfile schema validation failed. Errors: \\[object has missing required properties \\(\\[\"actions\"\\]\\)\\]$"
+        "Devfile schema validation failed. Root error: \\[#/commands/0: required key \\[actions\\] not found\\].$"
       },
       {
         "command/devfile_multiple_commands_actions.yaml",
-        "Devfile schema validation failed. Errors: \\[array is too long: must have at most 1 elements but instance has 2 elements\\]$"
+        "Devfile schema validation failed. Root error: \\[#/commands/0/actions: expected maximum item count: 1, found: 2\\].$"
       },
       // cheEditor/chePlugin tool model testing
       {
         "editor_plugin_tool/devfile_editor_tool_with_missing_id.yaml",
-        "Devfile schema validation failed\\. Errors: \\[instance failed to match exactly one schema \\(matched 0 out of 3\\)\\]"
+        "Devfile schema validation failed. Root error: \\[#/tools/0: #: only 1 subschema matches out of 2\\].Nested errors: \\[#/tools/0: required key \\[id\\] not found\\]$"
       },
       // kubernetes/openshift tool model testing
       {
         "kubernetes_openshift_tool/devfile_openshift_tool_with_missing_local.yaml",
-        "Devfile schema validation failed\\. Errors: \\[instance failed to match exactly one schema \\(matched 0 out of 3\\)\\]"
+        "Devfile schema validation failed. Root error: \\[#/tools/0: #: only 1 subschema matches out of 2\\].Nested errors: \\[#/tools/0: required key \\[local\\] not found\\]$"
       },
       // Dockerimage tool model testing
       {
         "dockerimage_tool/devfile_dockerimage_tool_with_missing_image.yaml",
-        "Devfile schema validation failed\\. Errors: \\[instance failed to match exactly one schema \\(matched 0 out of 3\\)\\]"
+        "Devfile schema validation failed. Root error: \\[#/tools/0: #: only 1 subschema matches out of 2\\].Nested errors: \\[#/tools/0: required key \\[image\\] not found\\]$"
       },
       {
         "dockerimage_tool/devfile_dockerimage_tool_with_missing_memory_limit.yaml",
-        "Devfile schema validation failed\\. Errors: \\[instance failed to match exactly one schema \\(matched 0 out of 3\\)\\]"
+        "Devfile schema validation failed. Root error: \\[#/tools/0: #: only 1 subschema matches out of 2\\].Nested errors: \\[#/tools/0: required key \\[memoryLimit\\] not found\\]$"
       },
     };
   }
