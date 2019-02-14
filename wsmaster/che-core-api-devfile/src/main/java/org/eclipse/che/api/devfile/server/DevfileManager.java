@@ -13,11 +13,9 @@ package org.eclipse.che.api.devfile.server;
 
 import static java.util.Collections.emptyMap;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.annotations.Beta;
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import java.util.HashMap;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -32,6 +30,7 @@ import org.eclipse.che.api.workspace.server.WorkspaceManager;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceConfigImpl;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
 import org.eclipse.che.commons.env.EnvironmentContext;
+import org.json.JSONObject;
 
 /**
  * Facade for devfile related operations.
@@ -42,7 +41,7 @@ import org.eclipse.che.commons.env.EnvironmentContext;
 @Singleton
 public class DevfileManager {
 
-  private final ObjectMapper objectMapper;
+  private final Gson gson = new Gson();
   private DevfileSchemaValidator schemaValidator;
   private DevfileIntegrityValidator integrityValidator;
   private DevfileConverter devfileConverter;
@@ -58,7 +57,6 @@ public class DevfileManager {
     this.integrityValidator = integrityValidator;
     this.devfileConverter = devfileConverter;
     this.workspaceManager = workspaceManager;
-    this.objectMapper = new ObjectMapper(new YAMLFactory());
   }
 
   /**
@@ -69,12 +67,12 @@ public class DevfileManager {
    * @param verbose when true, method returns more explained validation error messages if any
    * @return Devfile object created from the source content
    * @throws DevfileFormatException when any of schema or integrity validations fail
-   * @throws JsonProcessingException when parsing error occurs
+   * @throws JsonSyntaxException when parsing error occurs
    */
   public Devfile parse(String devfileContent, boolean verbose)
-      throws DevfileFormatException, JsonProcessingException {
-    JsonNode parsed = schemaValidator.validateBySchema(devfileContent, verbose);
-    Devfile devfile = objectMapper.treeToValue(parsed, Devfile.class);
+      throws DevfileFormatException, JsonSyntaxException {
+    JSONObject parsed = schemaValidator.validateBySchema(devfileContent, verbose);
+    Devfile devfile= gson.fromJson(parsed.toString(),Devfile.class);
     initializeMaps(devfile);
     integrityValidator.validateDevfile(devfile);
     return devfile;

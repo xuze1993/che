@@ -82,7 +82,7 @@ public class DevfileManagerTest {
       expectedExceptions = DevfileFormatException.class,
       expectedExceptionsMessageRegExp = "Devfile schema validation failed. Errors: [\\w\\W]+")
   public void shouldThrowExceptionWhenUnconvertableContentProvided() throws Exception {
-    String yamlContent = getTestResource("devfile.yaml").concat("foos:");
+    String yamlContent = getTestResource("devfile.yaml").concat("foos: bar");
 
     devfileManager.parse(yamlContent, true);
 

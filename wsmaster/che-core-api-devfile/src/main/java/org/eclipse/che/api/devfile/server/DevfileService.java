@@ -18,6 +18,7 @@ import static org.eclipse.che.api.workspace.server.WorkspaceKeyValidator.validat
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.google.gson.JsonSyntaxException;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -128,7 +129,7 @@ public class DevfileService extends Service {
       workspace = devfileManager.createWorkspace(devfile, null);
     } catch (DevfileException e) {
       throw new BadRequestException(e.getMessage());
-    } catch (JsonProcessingException e) {
+    } catch (JsonSyntaxException e) {
       throw new ServerException(e.getMessage(), e);
     }
     return Response.status(201)

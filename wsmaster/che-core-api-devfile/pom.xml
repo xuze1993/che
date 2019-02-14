@@ -191,6 +191,7 @@
                     </execution>
                 </executions>
                 <configuration>
+                    <annotationStyle>gson</annotationStyle>
                     <sourceDirectory>${basedir}/src/main/resources/schema</sourceDirectory>
                     <targetPackage>org.eclipse.che.api.devfile.model</targetPackage>
                     <includeAdditionalProperties>false</includeAdditionalProperties>

@@ -31,7 +31,7 @@ public class DevfileSchemaValidatorTest {
     String devFileYamlContent =
         Files.readFile(getClass().getClassLoader().getResourceAsStream("devfile.yaml"));
     // when
-    schemaValidator.validateBySchema(devFileYamlContent, false);
+    schemaValidator.validateBySchema(devFileYamlContent, true);
   }
 
   @Test
