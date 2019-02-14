@@ -11,32 +11,27 @@
  */
 package org.eclipse.che.api.devfile.server.validator;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonNull;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.Map;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import org.eclipse.che.api.devfile.server.DevfileFormatException;
 import org.eclipse.che.api.devfile.server.schema.DevfileSchemaProvider;
 import org.everit.json.schema.ValidationException;
+import org.json.JSONArray;
 import org.json.JSONObject;
-import org.json.JSONTokener;
 import org.yaml.snakeyaml.Yaml;
 
-/** Validates YAML devfile content against given JSON schema. */
+/**
+ * Validates YAML devfile content against given JSON schema.
+ */
 @Singleton
 public class DevfileSchemaValidator {
 
   private Yaml yaml = new Yaml();
-  private Gson gson = new GsonBuilder().setPrettyPrinting().create();
   private DevfileSchemaProvider schemaProvider;
 
   @Inject
@@ -44,73 +39,82 @@ public class DevfileSchemaValidator {
     this.schemaProvider = schemaProvider;
   }
 
-  public JSONObject validateBySchema(String yamlContent, boolean verbose)
+  public JSONObject validateBySchema(String yamlContent)
       throws DevfileFormatException {
     JSONObject data;
     try {
       Object obj = yaml.load(yamlContent);
-      JsonElement jsonObject = wrapSnakeObject(obj);
-      data = new JSONObject(new JSONTokener(gson.toJson(jsonObject)));
+      data = (JSONObject) wrapJsonObject(obj);
       schemaProvider.getSchema().validate(data);
     } catch (IOException e) {
       throw new DevfileFormatException("Unable to validate Devfile. Error: " + e.getMessage());
     } catch (ValidationException ve) {
-      throw new DevfileFormatException("Devfile schema validation failed. Errors: " + ve.getMessage());
+      throw new DevfileFormatException(prepareErrorMessage(ve));
     }
     return data;
   }
 
-  public static JsonElement wrapSnakeObject(Object o) {
+  private String prepareErrorMessage(ValidationException e) {
+    StringBuilder sb = new StringBuilder(
+        "Devfile schema validation failed. Root error: [");
+    sb.append(e.getMessage());
+    sb.append("].");
+    if (!e.getCausingExceptions().isEmpty()) {
+      sb.append("Nested errors: ");
+      //ODO: is it worth to flatten all ?
+      sb.append(e
+          .getCausingExceptions()
+          .stream()
+          .map(ValidationException::getMessage)
+          .collect(Collectors.joining(", ", "[", "]")));
+    }
+    return sb.toString();
+  }
 
-    //NULL => JsonNull
-    if (o == null)
-      return JsonNull.INSTANCE;
+  private Object wrapJsonObject(Object o) {
 
-    // Collection => JsonArray
+    //NULL => JSONObject.NULL
+    if (o == null) {
+      return JSONObject.NULL;
+    }
+
+    // Collection => JSONArray
     if (o instanceof Collection) {
-      JsonArray array = new JsonArray();
-      for (Object childObj : (Collection<?>)o)
-        array.add(wrapSnakeObject(childObj));
+      JSONArray array = new JSONArray();
+      for (Object childObj : (Collection<?>) o) {
+        array.put(wrapJsonObject(childObj));
+      }
       return array;
     }
 
-    // Array => JsonArray
+    // Array => JSONArray
     if (o.getClass().isArray()) {
-      JsonArray array = new JsonArray();
+      JSONArray array = new JSONArray();
 
       int length = Array.getLength(array);
-      for (int i=0; i<length; i++)
-        array.add(wrapSnakeObject(Array.get(array, i)));
+      for (int i = 0; i < length; i++) {
+        array.put(wrapJsonObject(Array.get(array, i)));
+      }
 
       return array;
     }
 
-    // Map => JsonObject
+    // Map => JSONObject
     if (o instanceof Map) {
-      Map<?, ?> map = (Map<?, ?>)o;
+      Map<?, ?> map = (Map<?, ?>) o;
 
-      JsonObject jsonObject = new JsonObject();
+      JSONObject jsonObject = new JSONObject();
       for (final Map.Entry<?, ?> entry : map.entrySet()) {
         final String name = String.valueOf(entry.getKey());
         final Object value = entry.getValue();
-        jsonObject.add(name, wrapSnakeObject(value));
+        jsonObject.put(name, wrapJsonObject(value));
       }
 
       return jsonObject;
     }
 
-    // everything else => JsonPrimitive
-    if (o instanceof String)
-      return new JsonPrimitive((String)o);
-    if (o instanceof Number)
-      return new JsonPrimitive((Number)o);
-    if (o instanceof Character)
-      return new JsonPrimitive((Character)o);
-    if (o instanceof Boolean)
-      return new JsonPrimitive((Boolean)o);
-
-    // otherwise.. string is a good guess
-    return new JsonPrimitive(String.valueOf(o));
+    // everything else
+    return o;
   }
 
 }

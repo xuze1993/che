@@ -56,6 +56,7 @@ public class DevfileManagerTest {
   private DevfileConverter devfileConverter;
   @Mock private WorkspaceManager workspaceManager;
   @Mock private KubernetesToolApplier kubernetesToolApplier;
+  @Mock private DockerimageToolApplier dockerimageToolApplier;
 
   private DevfileManager devfileManager;
 
@@ -63,7 +64,7 @@ public class DevfileManagerTest {
   public void setUp() throws Exception {
     schemaValidator = spy(new DevfileSchemaValidator(new DevfileSchemaProvider()));
     integrityValidator = spy(new DevfileIntegrityValidator());
-    devfileConverter = spy(new DevfileConverter(kubernetesToolApplier));
+    devfileConverter = spy(new DevfileConverter(kubernetesToolApplier, dockerimageToolApplier));
     devfileManager =
         new DevfileManager(schemaValidator, integrityValidator, devfileConverter, workspaceManager);
   }
@@ -72,9 +73,9 @@ public class DevfileManagerTest {
   public void testValidateAndConvert() throws Exception {
     String yamlContent = getTestResource("devfile.yaml");
 
-    devfileManager.parse(yamlContent, true);
+    devfileManager.parse(yamlContent);
 
-    verify(schemaValidator).validateBySchema(eq(yamlContent), eq(true));
+    verify(schemaValidator).validateBySchema(eq(yamlContent));
     verify(integrityValidator).validateDevfile(any(Devfile.class));
   }
 
@@ -84,9 +85,9 @@ public class DevfileManagerTest {
   public void shouldThrowExceptionWhenUnconvertableContentProvided() throws Exception {
     String yamlContent = getTestResource("devfile.yaml").concat("foos: bar");
 
-    devfileManager.parse(yamlContent, true);
+    devfileManager.parse(yamlContent);
 
-    verify(schemaValidator).validateBySchema(eq(yamlContent), eq(true));
+    verify(schemaValidator).validateBySchema(eq(yamlContent));
     verifyNoMoreInteractions(integrityValidator);
   }
 
@@ -111,7 +112,7 @@ public class DevfileManagerTest {
             });
     String yamlContent =
         Files.readFile(getClass().getClassLoader().getResourceAsStream("devfile.yaml"));
-    Devfile devfile = devfileManager.parse(yamlContent, true);
+    Devfile devfile = devfileManager.parse(yamlContent);
     // when
     devfileManager.createWorkspace(devfile, null);
     // then

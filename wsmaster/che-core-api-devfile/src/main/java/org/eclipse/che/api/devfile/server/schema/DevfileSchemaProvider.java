@@ -27,20 +27,26 @@ import org.json.JSONTokener;
 @Singleton
 public class DevfileSchemaProvider {
 
-  private SoftReference<String> schemaRef = new SoftReference<>(null);
+  private SoftReference<String> contentRef = new SoftReference<>(null);
+  private SoftReference<Schema> schemaRef = new SoftReference<>(null);
 
   public String getSchemaContent() throws IOException {
-    String schema = schemaRef.get();
+    String schema = contentRef.get();
     if (schema == null) {
       schema = loadFile();
-      schemaRef = new SoftReference<>(schema);
+      contentRef = new SoftReference<>(schema);
     }
     return schema;
   }
 
   public Schema getSchema() throws IOException {
-    JSONObject rawSchema = new JSONObject(new JSONTokener(getSchemaContent()));
-    return SchemaLoader.load(rawSchema);
+    Schema schema = schemaRef.get();
+    if (schema == null) {
+      JSONObject rawSchema = new JSONObject(new JSONTokener(getSchemaContent()));
+      schema = SchemaLoader.load(rawSchema);
+      schemaRef = new SoftReference<>(schema);
+    }
+    return schema;
   }
 
   private String loadFile() throws IOException {

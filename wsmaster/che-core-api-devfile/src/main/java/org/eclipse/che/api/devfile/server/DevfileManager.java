@@ -64,14 +64,13 @@ public class DevfileManager {
    * input data.
    *
    * @param devfileContent raw content of devfile
-   * @param verbose when true, method returns more explained validation error messages if any
    * @return Devfile object created from the source content
    * @throws DevfileFormatException when any of schema or integrity validations fail
    * @throws JsonSyntaxException when parsing error occurs
    */
-  public Devfile parse(String devfileContent, boolean verbose)
+  public Devfile parse(String devfileContent)
       throws DevfileFormatException, JsonSyntaxException {
-    JSONObject parsed = schemaValidator.validateBySchema(devfileContent, verbose);
+    JSONObject parsed = schemaValidator.validateBySchema(devfileContent);
     Devfile devfile= gson.fromJson(parsed.toString(),Devfile.class);
     initializeMaps(devfile);
     integrityValidator.validateDevfile(devfile);
