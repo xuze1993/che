@@ -31,12 +31,12 @@ public class DevfileSchemaProvider {
   private SoftReference<Schema> schemaRef = new SoftReference<>(null);
 
   public String getSchemaContent() throws IOException {
-    String schema = contentRef.get();
-    if (schema == null) {
-      schema = loadFile();
-      contentRef = new SoftReference<>(schema);
+    String content = contentRef.get();
+    if (content == null) {
+      content = loadFile();
+      contentRef = new SoftReference<>(content);
     }
-    return schema;
+    return content;
   }
 
   public Schema getSchema() throws IOException {
