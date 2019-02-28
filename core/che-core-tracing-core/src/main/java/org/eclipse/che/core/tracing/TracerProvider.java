@@ -12,8 +12,9 @@
 package org.eclipse.che.core.tracing;
 
 import com.google.common.annotations.Beta;
+import io.jaegertracing.Configuration;
+import io.jaegertracing.micrometer.MicrometerMetricsFactory;
 import io.opentracing.Tracer;
-import io.opentracing.contrib.tracerresolver.TracerResolver;
 import io.opentracing.util.GlobalTracer;
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -29,7 +30,12 @@ public class TracerProvider implements Provider<Tracer> {
   private final Tracer tracer;
 
   public TracerProvider() {
-    this.tracer = TracerResolver.resolveTracer();
+    MicrometerMetricsFactory metricsReporter = new MicrometerMetricsFactory();
+    // TODO unhardcode service name "che-server" ?
+    Configuration configuration = new Configuration("che-server");
+    Tracer tracer = configuration.getTracerBuilder().withMetricsFactory(metricsReporter).build();
+
+    this.tracer = tracer;
     GlobalTracer.register(tracer);
   }
 
