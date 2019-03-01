@@ -31,8 +31,7 @@ public class TracerProvider implements Provider<Tracer> {
 
   public TracerProvider() {
     MicrometerMetricsFactory metricsReporter = new MicrometerMetricsFactory();
-    // TODO unhardcode service name "che-server" ?
-    Configuration configuration = new Configuration("che-server");
+    Configuration configuration = Configuration.fromEnv();
     Tracer tracer = configuration.getTracerBuilder().withMetricsFactory(metricsReporter).build();
 
     this.tracer = tracer;
