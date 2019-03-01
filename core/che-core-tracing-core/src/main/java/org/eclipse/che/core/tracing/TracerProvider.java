@@ -15,6 +15,7 @@ import com.google.common.annotations.Beta;
 import io.jaegertracing.Configuration;
 import io.jaegertracing.micrometer.MicrometerMetricsFactory;
 import io.opentracing.Tracer;
+import io.opentracing.contrib.tracerresolver.TracerResolver;
 import io.opentracing.util.GlobalTracer;
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -30,11 +31,14 @@ public class TracerProvider implements Provider<Tracer> {
   private final Tracer tracer;
 
   public TracerProvider() {
-    MicrometerMetricsFactory metricsReporter = new MicrometerMetricsFactory();
-    Configuration configuration = Configuration.fromEnv();
-    Tracer tracer = configuration.getTracerBuilder().withMetricsFactory(metricsReporter).build();
+    if (Boolean.valueOf(System.getenv("CHE_METRICS_ENABLED"))) {
+      MicrometerMetricsFactory metricsReporter = new MicrometerMetricsFactory();
+      Configuration configuration = Configuration.fromEnv();
+      tracer = configuration.getTracerBuilder().withMetricsFactory(metricsReporter).build();
+    } else {
+      tracer = TracerResolver.resolveTracer();
+    }
 
-    this.tracer = tracer;
     GlobalTracer.register(tracer);
   }
 
