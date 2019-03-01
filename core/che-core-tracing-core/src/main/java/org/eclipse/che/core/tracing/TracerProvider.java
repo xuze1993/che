@@ -21,9 +21,10 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 /**
- * Guice @{@link javax.inject.Provider} of @{@link io.opentracing.Tracer} objects. Register Tracer
- * in @{@link io.opentracing.util.GlobalTracer} for future use by classes that has no access to
- * container like datasources, etc.
+ * Guice @{@link javax.inject.Provider} of @{@link io.opentracing.Tracer} objects.If Che metrics
+ * are enabled, then enable custom metrics factory, which would expose jaeger internal metrics to
+ * Prometheus. Register Tracer in @{@link io.opentracing.util.GlobalTracer} for future use by
+ * classes that has no access to container like datasources, etc.
  */
 @Beta
 @Singleton
