@@ -14,6 +14,7 @@ package org.eclipse.che.selenium.core.constant;
 /** @author Ann Shumilova */
 public enum TestStacksConstants {
   ANDROID("android-default", "Android"),
+  CHE7("Che 7", "Che 7"),
   JAVA("java-default", "Java"),
   JAVA_MYSQL("java-mysql", "Java-MySQL"),
   BLANK("blank-default", "Blank"),

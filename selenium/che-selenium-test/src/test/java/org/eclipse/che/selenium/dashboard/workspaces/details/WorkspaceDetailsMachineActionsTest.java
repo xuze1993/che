@@ -15,9 +15,6 @@ import static org.eclipse.che.selenium.core.TestGroup.DOCKER;
 import static org.eclipse.che.selenium.core.TestGroup.K8S;
 import static org.eclipse.che.selenium.core.TestGroup.OPENSHIFT;
 import static org.eclipse.che.selenium.core.TestGroup.OSIO;
-import static org.eclipse.che.selenium.pageobject.dashboard.workspaces.WorkspaceDetails.ActionButton.APPLY_BUTTON;
-import static org.eclipse.che.selenium.pageobject.dashboard.workspaces.WorkspaceDetails.ActionButton.CANCEL_BUTTON;
-import static org.eclipse.che.selenium.pageobject.dashboard.workspaces.WorkspaceDetails.ActionButton.SAVE_BUTTON;
 import static org.eclipse.che.selenium.pageobject.dashboard.workspaces.WorkspaceDetails.WorkspaceDetailsTab.MACHINES;
 import static org.openqa.selenium.Keys.ARROW_DOWN;
 import static org.openqa.selenium.Keys.ARROW_UP;
@@ -27,6 +24,7 @@ import com.google.inject.Inject;
 import org.eclipse.che.commons.lang.NameGenerator;
 import org.eclipse.che.selenium.core.SeleniumWebDriver;
 import org.eclipse.che.selenium.core.webdriver.SeleniumWebDriverHelper;
+import org.eclipse.che.selenium.core.workspace.InjectTestWorkspace;
 import org.eclipse.che.selenium.core.workspace.TestWorkspace;
 import org.eclipse.che.selenium.pageobject.dashboard.Dashboard;
 import org.eclipse.che.selenium.pageobject.dashboard.workspaces.EditMachineForm;
@@ -55,11 +53,13 @@ public class WorkspaceDetailsMachineActionsTest {
   private static final String CHANGED_RAM_SIZE = "7";
   private static final String MIN_VALID_RAM_VALUE = "0.1";
 
+  @InjectTestWorkspace(startAfterCreation = false)
+  private TestWorkspace testWorkspace;
+
   @Inject private Dashboard dashboard;
   @Inject private Workspaces workspaces;
   @Inject private WorkspaceDetails workspaceDetails;
   @Inject private WorkspaceDetailsMachines workspaceDetailsMachines;
-  @Inject private TestWorkspace testWorkspace;
   @Inject private EditMachineForm editMachineForm;
   @Inject private SeleniumWebDriverHelper seleniumWebDriverHelper;
   @Inject private WorkspaceInstallers workspaceInstallers;
@@ -213,11 +213,7 @@ public class WorkspaceDetailsMachineActionsTest {
     editMachineForm.waitSaveButtonEnabling();
     editMachineForm.clickOnSaveButton();
     editMachineForm.waitFormInvisibility();
-    workspaceDetails.waitAllEnabled(SAVE_BUTTON, APPLY_BUTTON, CANCEL_BUTTON);
-    workspaceDetailsMachines.waitMachineListItemWithAttributes(
-        MACHINE_NAME, IMAGE_NAME, CHANGED_RAM_SIZE);
-    workspaceDetails.waitAllEnabled(SAVE_BUTTON, APPLY_BUTTON, CANCEL_BUTTON);
-    workspaceDetails.waitAndClickOn(SAVE_BUTTON);
+
     workspaceDetailsMachines.waitMachineListItemWithAttributes(
         MACHINE_NAME, IMAGE_NAME, CHANGED_RAM_SIZE);
   }

@@ -11,15 +11,8 @@
  */
 package org.eclipse.che.selenium.dashboard.workspaces.details;
 
-import static org.eclipse.che.commons.lang.NameGenerator.generate;
-import static org.eclipse.che.selenium.core.project.ProjectTemplates.MAVEN_SPRING;
-import static org.eclipse.che.selenium.pageobject.dashboard.ProjectSourcePage.Template.CONSOLE_JAVA_SIMPLE;
-import static org.eclipse.che.selenium.pageobject.dashboard.ProjectSourcePage.Template.WEB_JAVA_SPRING;
-import static org.eclipse.che.selenium.pageobject.dashboard.workspaces.WorkspaceDetails.StateWorkspace.RUNNING;
-import static org.eclipse.che.selenium.pageobject.dashboard.workspaces.WorkspaceDetails.StateWorkspace.STOPPED;
 import static org.eclipse.che.selenium.pageobject.dashboard.workspaces.WorkspaceDetails.WorkspaceDetailsTab.INSTALLERS;
 import static org.eclipse.che.selenium.pageobject.dashboard.workspaces.WorkspaceDetails.WorkspaceDetailsTab.OVERVIEW;
-import static org.eclipse.che.selenium.pageobject.dashboard.workspaces.WorkspaceDetails.WorkspaceDetailsTab.PROJECTS;
 import static org.eclipse.che.selenium.pageobject.dashboard.workspaces.WorkspaceDetails.WorkspaceDetailsTab.SERVERS;
 import static org.eclipse.che.selenium.pageobject.dashboard.workspaces.WorkspaceDetails.WorkspaceDetailsTab.SSH;
 import static org.eclipse.che.selenium.pageobject.dashboard.workspaces.WorkspaceDetails.WorkspaceDetailsTab.VOLUMES;
@@ -28,21 +21,17 @@ import static org.testng.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
-import java.net.URL;
-import java.nio.file.Paths;
-import org.eclipse.che.selenium.core.client.TestProjectServiceClient;
 import org.eclipse.che.selenium.core.client.TestWorkspaceServiceClient;
 import org.eclipse.che.selenium.core.user.DefaultTestUser;
 import org.eclipse.che.selenium.core.utils.WaitUtils;
+import org.eclipse.che.selenium.core.workspace.InjectTestWorkspace;
 import org.eclipse.che.selenium.core.workspace.TestWorkspace;
 import org.eclipse.che.selenium.pageobject.Loader;
 import org.eclipse.che.selenium.pageobject.dashboard.Dashboard;
-import org.eclipse.che.selenium.pageobject.dashboard.ProjectSourcePage;
 import org.eclipse.che.selenium.pageobject.dashboard.workspaces.WorkspaceDetails;
 import org.eclipse.che.selenium.pageobject.dashboard.workspaces.WorkspaceInstallers;
 import org.eclipse.che.selenium.pageobject.dashboard.workspaces.WorkspaceMachines;
 import org.eclipse.che.selenium.pageobject.dashboard.workspaces.WorkspaceOverview;
-import org.eclipse.che.selenium.pageobject.dashboard.workspaces.WorkspaceProjects;
 import org.eclipse.che.selenium.pageobject.dashboard.workspaces.WorkspaceServers;
 import org.eclipse.che.selenium.pageobject.dashboard.workspaces.WorkspaceSsh;
 import org.eclipse.che.selenium.pageobject.dashboard.workspaces.Workspaces;
@@ -54,7 +43,6 @@ import org.testng.annotations.Test;
 
 /** @author Skoryk Serhii */
 public class WorkspaceDetailsSingleMachineTest {
-  private static final String PROJECT_NAME = generate("project", 4);
   private static final ImmutableMap<String, Boolean> EXPECTED_INSTALLERS =
       ImmutableMap.<String, Boolean>builder()
           .put("C# language server", false)
@@ -73,30 +61,25 @@ public class WorkspaceDetailsSingleMachineTest {
 
   private String workspaceName;
 
+  @InjectTestWorkspace(startAfterCreation = false)
+  private TestWorkspace testWorkspace;
+
   @Inject private DefaultTestUser testUser;
   @Inject private Loader loader;
   @Inject private Dashboard dashboard;
   @Inject private WorkspaceDetails workspaceDetails;
   @Inject private TestWorkspaceServiceClient workspaceServiceClient;
-  @Inject private WorkspaceProjects workspaceProjects;
   @Inject private Workspaces workspaces;
-  @Inject private ProjectSourcePage projectSourcePage;
   @Inject private WorkspaceMachines workspaceMachines;
   @Inject private WorkspaceServers workspaceServers;
   @Inject private WorkspaceInstallers workspaceInstallers;
   @Inject private WorkspaceOverview workspaceOverview;
-  @Inject private TestWorkspace testWorkspace;
-  @Inject private TestProjectServiceClient testProjectServiceClient;
   @Inject private WorkspaceSsh workspaceSsh;
   @Inject private WorkspacesVolumes workspacesVolumes;
 
   @BeforeClass
   public void setUp() throws Exception {
     workspaceName = testWorkspace.getName();
-    URL resource =
-        WorkspaceDetailsSingleMachineTest.this.getClass().getResource("/projects/guess-project");
-    testProjectServiceClient.importProject(
-        testWorkspace.getId(), Paths.get(resource.toURI()), PROJECT_NAME, MAVEN_SPRING);
 
     dashboard.open();
     dashboard.selectWorkspacesItemOnDashboard();
@@ -104,9 +87,6 @@ public class WorkspaceDetailsSingleMachineTest {
     workspaces.selectWorkspaceItemName(workspaceName);
     workspaceDetails.waitToolbarTitleName(workspaceName);
     workspaceDetails.selectTabInWorkspaceMenu(OVERVIEW);
-    workspaceDetails.checkStateOfWorkspace(RUNNING);
-    workspaceDetails.clickOnStopWorkspace();
-    workspaceDetails.checkStateOfWorkspace(STOPPED);
   }
 
   @AfterClass
@@ -186,27 +166,6 @@ public class WorkspaceDetailsSingleMachineTest {
   }
 
   @Test
-  public void checkWorkingWithProjects() {
-    workspaceDetails.selectTabInWorkspaceMenu(PROJECTS);
-
-    // add new project and cancel adding
-    addNewProject(WEB_JAVA_SPRING);
-    workspaceDetails.clickOnCancelChangesBtn();
-    workspaceProjects.waitProjectIsNotPresent(WEB_JAVA_SPRING);
-
-    // add two projects and save changes
-    workspaceProjects.clickOnAddNewProjectButton();
-    projectSourcePage.selectSample(WEB_JAVA_SPRING);
-    projectSourcePage.selectSample(CONSOLE_JAVA_SIMPLE);
-    projectSourcePage.clickOnAddProjectButton();
-    clickOnSaveButton();
-
-    // check that project exists(workspace will restart)
-    workspaceProjects.waitProjectIsPresent(WEB_JAVA_SPRING);
-    workspaceProjects.waitProjectIsPresent(CONSOLE_JAVA_SIMPLE);
-  }
-
-  @Test
   public void checkSshTab() {
     workspaceDetails.selectTabInWorkspaceMenu(SSH);
 
@@ -254,13 +213,6 @@ public class WorkspaceDetailsSingleMachineTest {
     workspaceDetails.clickOnDeleteButtonInDialogWindow();
     workspacesVolumes.waitVolumeNotExists(renamedVolumeName);
     clickOnSaveButton();
-  }
-
-  private void addNewProject(String projectName) {
-    workspaceProjects.clickOnAddNewProjectButton();
-    projectSourcePage.selectSample(projectName);
-    projectSourcePage.clickOnAddProjectButton();
-    workspaceProjects.waitProjectIsPresent(projectName);
   }
 
   private void clickOnSaveButton() {

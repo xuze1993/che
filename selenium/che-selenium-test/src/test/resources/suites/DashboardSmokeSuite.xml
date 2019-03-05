@@ -1,0 +1,51 @@
+<!--
+
+    Copyright (c) 2012-2018 Red Hat, Inc.
+    This program and the accompanying materials are made
+    available under the terms of the Eclipse Public License 2.0
+    which is available at https://www.eclipse.org/legal/epl-2.0/
+
+    SPDX-License-Identifier: EPL-2.0
+
+    Contributors:
+      Red Hat, Inc. - initial API and implementation
+
+-->
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+<suite name="Dashboard selenium smoke test suite"
+  verbose="10"
+  parallel="classes"
+  thread-count="2">
+  <test name="all">
+    <classes>
+      <class name="org.eclipse.che.selenium.dashboard.organization.AdminOfParentOrganizationTest"/>
+      <class name="org.eclipse.che.selenium.dashboard.organization.AdminOfSubOrganizationTest"/>
+      <class name="org.eclipse.che.selenium.dashboard.organization.CreateRootOrganizationTest"/>
+      <class name="org.eclipse.che.selenium.dashboard.organization.DeleteOrganizationTest"/>
+      <class name="org.eclipse.che.selenium.dashboard.organization.DeleteOrganizationByBulkTest"/>
+      <class name="org.eclipse.che.selenium.dashboard.organization.DeleteOrganizationInListTest"/>
+      <class name="org.eclipse.che.selenium.dashboard.organization.FilterOrganizationTest"/>
+      <class name="org.eclipse.che.selenium.dashboard.organization.MemberOrganizationTest"/>
+      <class name="org.eclipse.che.selenium.dashboard.organization.OrganizationMembersTest"/>
+      <class name="org.eclipse.che.selenium.dashboard.organization.RenameOrganizationTest"/>
+      <class name="org.eclipse.che.selenium.dashboard.organization.SystemAdminOrganizationTest"/>
+      <class name="org.eclipse.che.selenium.dashboard.organization.UserEmptyOrganizationTest"/>
+
+      <class name="org.eclipse.che.selenium.dashboard.workspaces.details.WorkspaceDetailsMachineActionsTest"/>
+      <class name="org.eclipse.che.selenium.dashboard.workspaces.details.WorkspaceDetailsMachinesRamTest"/>
+      <class name="org.eclipse.che.selenium.dashboard.workspaces.details.WorkspaceDetailsOverviewTest"/>
+      <class name="org.eclipse.che.selenium.dashboard.workspaces.details.WorkspaceDetailsSingleMachineTest"/>
+
+      <class name="org.eclipse.che.selenium.dashboard.workspaces.WorkspacesListTest"/>
+      <class name="org.eclipse.che.selenium.dashboard.workspaces.NewWorkspacePageTest"/>
+
+      <class name="org.eclipse.che.selenium.dashboard.AccountTest"/>
+      <class name="org.eclipse.che.selenium.dashboard.CreateFactoryTest"/>
+      <class name="org.eclipse.che.selenium.dashboard.CreateStackTest"/>
+      <class name="org.eclipse.che.selenium.dashboard.FactoriesListTest"/>
+      <class name="org.eclipse.che.selenium.dashboard.RenameWorkspaceTest"/>
+      <class name="org.eclipse.che.selenium.dashboard.StacksListTest"/>
+
+    </classes>
+  </test>
+</suite>

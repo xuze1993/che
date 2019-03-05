@@ -13,7 +13,6 @@ package org.eclipse.che.selenium.dashboard;
 
 import static org.eclipse.che.commons.lang.NameGenerator.generate;
 import static org.eclipse.che.selenium.pageobject.dashboard.workspaces.WorkspaceDetails.WorkspaceDetailsTab.OVERVIEW;
-import static org.eclipse.che.selenium.pageobject.dashboard.workspaces.Workspaces.Status.STOPPED;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
@@ -21,6 +20,7 @@ import com.google.inject.Inject;
 import java.io.IOException;
 import org.eclipse.che.selenium.core.client.TestWorkspaceServiceClient;
 import org.eclipse.che.selenium.core.user.DefaultTestUser;
+import org.eclipse.che.selenium.core.workspace.InjectTestWorkspace;
 import org.eclipse.che.selenium.core.workspace.TestWorkspace;
 import org.eclipse.che.selenium.pageobject.dashboard.Dashboard;
 import org.eclipse.che.selenium.pageobject.dashboard.workspaces.WorkspaceDetails;
@@ -42,9 +42,11 @@ public class RenameWorkspaceTest {
   private static final String WS_NAME_TOO_LONG =
       ("The name has to be less than 101 characters long.");
 
+  @InjectTestWorkspace(startAfterCreation = false)
+  private TestWorkspace testWorkspace;
+
   @Inject private Dashboard dashboard;
   @Inject private WorkspaceDetails workspaceDetails;
-  @Inject private TestWorkspace ws;
   @Inject private DefaultTestUser user;
   @Inject private TestWorkspaceServiceClient workspaceServiceClient;
   @Inject private Workspaces workspaces;
@@ -54,7 +56,7 @@ public class RenameWorkspaceTest {
 
   @BeforeClass
   public void setUp() throws Exception {
-    this.workspaceName = ws.getName();
+    this.workspaceName = testWorkspace.getName();
     dashboard.open();
   }
 
@@ -69,8 +71,6 @@ public class RenameWorkspaceTest {
   public void renameNameWorkspaceTest() throws IOException {
     dashboard.selectWorkspacesItemOnDashboard();
     dashboard.waitToolbarTitleName("Workspaces");
-    workspaces.clickOnWorkspaceActionsButton(workspaceName);
-    workspaces.waitWorkspaceStatus(workspaceName, STOPPED);
     workspaces.selectWorkspaceItemName(workspaceName);
     workspaceDetails.waitToolbarTitleName(workspaceName);
     workspaceDetails.selectTabInWorkspaceMenu(OVERVIEW);

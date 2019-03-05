@@ -12,13 +12,9 @@
 package org.eclipse.che.selenium.dashboard;
 
 import static org.eclipse.che.commons.lang.NameGenerator.generate;
-import static org.eclipse.che.selenium.pageobject.dashboard.NewWorkspace.Stack.JAVA;
-import static org.eclipse.che.selenium.pageobject.dashboard.ProjectSourcePage.Template.WEB_JAVA_SPRING;
 import static org.eclipse.che.selenium.pageobject.dashboard.factories.CreateFactoryPage.TabNames.CONFIG_TAB_ID;
 import static org.eclipse.che.selenium.pageobject.dashboard.factories.CreateFactoryPage.TabNames.GIT_TAB_ID;
 import static org.eclipse.che.selenium.pageobject.dashboard.factories.CreateFactoryPage.TabNames.TEMPLATE_TAB_ID;
-import static org.eclipse.che.selenium.pageobject.dashboard.factories.CreateFactoryPage.TabNames.WORKSPACE_TAB_ID;
-import static org.eclipse.che.selenium.pageobject.dashboard.workspaces.WorkspaceDetails.StateWorkspace.STOPPED;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
@@ -35,26 +31,18 @@ import org.eclipse.che.selenium.core.client.TestFactoryServiceClient;
 import org.eclipse.che.selenium.core.client.TestGitHubRepository;
 import org.eclipse.che.selenium.core.client.TestWorkspaceServiceClient;
 import org.eclipse.che.selenium.core.user.DefaultTestUser;
+import org.eclipse.che.selenium.core.workspace.InjectTestWorkspace;
 import org.eclipse.che.selenium.core.workspace.TestWorkspace;
-import org.eclipse.che.selenium.core.workspace.TestWorkspaceProvider;
-import org.eclipse.che.selenium.pageobject.Loader;
 import org.eclipse.che.selenium.pageobject.dashboard.Dashboard;
 import org.eclipse.che.selenium.pageobject.dashboard.DashboardFactories;
-import org.eclipse.che.selenium.pageobject.dashboard.NewWorkspace;
-import org.eclipse.che.selenium.pageobject.dashboard.ProjectSourcePage;
 import org.eclipse.che.selenium.pageobject.dashboard.factories.CreateFactoryPage;
 import org.eclipse.che.selenium.pageobject.dashboard.factories.FactoryDetails;
-import org.eclipse.che.selenium.pageobject.dashboard.workspaces.WorkspaceDetails;
-import org.eclipse.che.selenium.pageobject.dashboard.workspaces.Workspaces;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 public class CreateFactoryTest {
-  private static final String PROJECT_WS_NAME = generate("project-ws", 4);
-  private static final String NO_PROJECT_WS_NAME = generate("no-project-ws", 4);
-  private static final String FACTORY_NAME_EXIST = generate("factoryExist", 4);
   private static final String MINIMAL_TEMPLATE_FACTORY_NAME = generate("factoryMin", 4);
   private static final String COMPLETE_TEMPLATE_FACTORY_NAME = generate("factoryComplete", 4);
   private static final String FACTORY_CREATED_FROM_WORKSPACE_NAME = generate("factoryWs", 4);
@@ -78,45 +66,42 @@ public class CreateFactoryTest {
   private static final String LOAD_FILE_CONFIGURATION_MESSAGE =
       "Successfully loaded file's configuration config-ws.json.";
 
+  private String workspaceName1;
+  private String workspaceName2;
+
   @Inject private TestWorkspaceServiceClient workspaceServiceClient;
   @Inject private TestFactoryServiceClient factoryServiceClient;
   @Inject private DashboardFactories dashboardFactories;
-  @Inject private ProjectSourcePage projectSourcePage;
-  @Inject private WorkspaceDetails workspaceDetails;
   @Inject private FactoryDetails factoryDetails;
-  @Inject private NewWorkspace newWorkspace;
   @Inject private DefaultTestUser defaultTestUser;
   @Inject private TestGitHubRepository testRepo;
-  @Inject private Workspaces workspaces;
   @Inject private CreateFactoryPage createFactoryPage;
   @Inject private Dashboard dashboard;
-  @Inject private Loader loader;
-  @Inject private TestWorkspaceProvider testWorkspaceProvider;
 
   // it is used to read workspace logs on test failure
+  @InjectTestWorkspace(startAfterCreation = false)
   private TestWorkspace testWorkspace1;
+
+  @InjectTestWorkspace(startAfterCreation = false)
   private TestWorkspace testWorkspace2;
 
   public CreateFactoryTest() {}
 
   @BeforeClass
   public void setUp() throws Exception {
-    dashboard.open();
+    workspaceName1 = testWorkspace1.getName();
+    workspaceName2 = testWorkspace2.getName();
 
-    // store info about created workspace to make SeleniumTestHandler.captureTestWorkspaceLogs()
-    // possible to read logs in case of test failure
-    testWorkspace1 = createWorkspaceWithProject(PROJECT_WS_NAME);
-    testWorkspace2 = createWorkspaceWithoutProject(NO_PROJECT_WS_NAME);
+    dashboard.open();
   }
 
   @AfterClass
   public void tearDown() throws Exception {
-    workspaceServiceClient.delete(PROJECT_WS_NAME, defaultTestUser.getName());
-    workspaceServiceClient.delete(NO_PROJECT_WS_NAME, defaultTestUser.getName());
+    workspaceServiceClient.delete(testWorkspace1.getName(), defaultTestUser.getName());
+    workspaceServiceClient.delete(testWorkspace1.getName(), defaultTestUser.getName());
 
     List<String> factoryList =
         Arrays.asList(
-            FACTORY_NAME_EXIST,
             MINIMAL_TEMPLATE_FACTORY_NAME,
             COMPLETE_TEMPLATE_FACTORY_NAME,
             FACTORY_CREATED_FROM_WORKSPACE_NAME,
@@ -194,13 +179,11 @@ public class CreateFactoryTest {
 
   @Test
   public void checkHandlingOfFactoryNames() {
-    // create a factory from workspace with a project
-    createFactoryFromWorkspaceWithProject(FACTORY_NAME_EXIST);
-
-    openNewFactoryPage();
-
-    // select created workspace from list of workspaces
-    createFactoryPage.clickOnWorkspaceFromList(PROJECT_WS_NAME);
+    // create a factory from template
+    createFactoryPage.waitToolbarTitle();
+    createFactoryPage.clickOnSourceTab(TEMPLATE_TAB_ID);
+    createFactoryPage.waitTemplateButtons();
+    createFactoryPage.clickOnMinimalTemplateButton();
 
     // enter empty factory name
     createFactoryPage.typeFactoryName("");
@@ -233,7 +216,7 @@ public class CreateFactoryTest {
     assertTrue(createFactoryPage.isCreateFactoryButtonEnabled());
 
     // enter an already existing factory name
-    createFactoryPage.typeFactoryName(FACTORY_NAME_EXIST);
+    createFactoryPage.typeFactoryName(FACTORY_CREATED_FROM_CONFIG_NAME);
     createFactoryPage.waitErrorMessage(EXIST_NAME_ERROR_MESSAGE);
 
     assertFalse(createFactoryPage.isCreateFactoryButtonEnabled());
@@ -317,111 +300,22 @@ public class CreateFactoryTest {
   }
 
   @Test
-  public void shouldCreateFactoryFromWorkspace() {
-    // check error when create factory without a project
-    createFactoryPage.clickOnSourceTab(WORKSPACE_TAB_ID);
-    createFactoryPage.clickOnWorkspaceFromList(NO_PROJECT_WS_NAME);
-
-    dashboard.waitNotificationMessage(WS_HAS_NO_PROJECT_ERROR_MESSAGE);
-    dashboard.waitNotificationIsClosed();
-
-    assertFalse(createFactoryPage.isCreateFactoryButtonEnabled());
-
-    // create a new factory from a workspace with a project
-    createFactoryFromWorkspaceWithProject(FACTORY_CREATED_FROM_WORKSPACE_NAME);
-
-    factoryDetails.waitFactoryName(FACTORY_CREATED_FROM_WORKSPACE_NAME);
-
-    // check present the id url and named url of the factory
-    dashboardFactories.waitFactoryIdUrl();
-    dashboardFactories.waitFactoryNamedUrl(FACTORY_CREATED_FROM_WORKSPACE_NAME);
-
-    factoryDetails.clickOnBackToFactoriesListButton();
-
-    // check that the created factory exists in the Factories list
-    dashboardFactories.waitAllFactoriesPage();
-    dashboardFactories.waitFactoryName(FACTORY_CREATED_FROM_WORKSPACE_NAME);
-    assertEquals(
-        dashboardFactories.getFactoryRamLimit(FACTORY_CREATED_FROM_WORKSPACE_NAME), "2048 MB");
-  }
-
-  @Test
   public void checkWorkspaceFiltering() {
     // click on the search button and wait search field visible
     createFactoryPage.clickOnSearchFactoryButton();
     createFactoryPage.waitSearchFactoryField();
 
     // filter by full workspace name
-    createFactoryPage.typeTextToSearchFactoryField(PROJECT_WS_NAME);
-    createFactoryPage.waitWorkspaceNameInList(PROJECT_WS_NAME);
+    createFactoryPage.typeTextToSearchFactoryField(workspaceName1);
+    createFactoryPage.waitWorkspaceNameInList(workspaceName1);
 
     // filter by a part of workspace name
     createFactoryPage.typeTextToSearchFactoryField(
-        PROJECT_WS_NAME.substring(PROJECT_WS_NAME.length() / 2));
-    createFactoryPage.waitWorkspaceNameInList(PROJECT_WS_NAME);
+        workspaceName1.substring(workspaceName1.length() / 2));
+    createFactoryPage.waitWorkspaceNameInList(workspaceName1);
 
     // filter by a nonexistent workspace name
     createFactoryPage.typeTextToSearchFactoryField(generate("", 8));
     createFactoryPage.waitWorkspacesListIsEmpty();
-  }
-
-  private TestWorkspace createWorkspaceWithProject(String workspaceName) {
-    // create a workspace from the Java stack with the web-java-spring project
-    dashboard.waitDashboardToolbarTitle();
-    dashboard.selectWorkspacesItemOnDashboard();
-    dashboard.waitToolbarTitleName("Workspaces");
-    workspaces.clickOnAddWorkspaceBtn();
-    newWorkspace.waitToolbar();
-    loader.waitOnClosed();
-
-    // we are selecting 'Java' stack from the 'All Stack' tab for compatibility with OSIO
-    newWorkspace.clickOnAllStacksTab();
-    newWorkspace.selectStack(JAVA);
-    newWorkspace.typeWorkspaceName(workspaceName);
-
-    projectSourcePage.clickOnAddOrImportProjectButton();
-    projectSourcePage.selectSample(WEB_JAVA_SPRING);
-    projectSourcePage.clickOnAddProjectButton();
-    projectSourcePage.waitCreatedProjectButton(WEB_JAVA_SPRING);
-
-    newWorkspace.clickOnCreateButtonAndEditWorkspace();
-
-    workspaceDetails.waitToolbarTitleName(workspaceName);
-    workspaceDetails.checkStateOfWorkspace(STOPPED);
-
-    return testWorkspaceProvider.getWorkspace(workspaceName, defaultTestUser);
-  }
-
-  private TestWorkspace createWorkspaceWithoutProject(String workspaceName) {
-    // create a workspace from the Java stack with the web-java-spring project
-    dashboard.waitDashboardToolbarTitle();
-    dashboard.selectWorkspacesItemOnDashboard();
-    dashboard.waitToolbarTitleName("Workspaces");
-    workspaces.clickOnAddWorkspaceBtn();
-    newWorkspace.waitToolbar();
-    loader.waitOnClosed();
-
-    // we are selecting 'Java' stack from the 'All Stack' tab for compatibility with OSIO
-    newWorkspace.clickOnAllStacksTab();
-    newWorkspace.selectStack(JAVA);
-    newWorkspace.typeWorkspaceName(workspaceName);
-
-    newWorkspace.clickOnCreateButtonAndEditWorkspace();
-
-    workspaceDetails.waitToolbarTitleName(workspaceName);
-    workspaceDetails.checkStateOfWorkspace(STOPPED);
-
-    return testWorkspaceProvider.getWorkspace(workspaceName, defaultTestUser);
-  }
-
-  private void createFactoryFromWorkspaceWithProject(String factoryName) {
-    createFactoryPage.clickOnSourceTab(WORKSPACE_TAB_ID);
-    createFactoryPage.typeFactoryName(factoryName);
-    createFactoryPage.clickOnWorkspaceFromList(PROJECT_WS_NAME);
-
-    // check that the Create Factory button is enabled after a workspace selecting
-    assertTrue(createFactoryPage.isCreateFactoryButtonEnabled());
-
-    createFactoryPage.clickOnCreateFactoryButton();
   }
 }

@@ -13,19 +13,14 @@ package org.eclipse.che.selenium.dashboard.workspaces;
 
 import static java.util.Arrays.asList;
 import static org.eclipse.che.selenium.core.TestGroup.UNDER_REPAIR;
-import static org.eclipse.che.selenium.core.project.ProjectTemplates.MAVEN_SPRING;
-import static org.eclipse.che.selenium.core.workspace.WorkspaceTemplate.UBUNTU_JDK8;
 import static org.eclipse.che.selenium.pageobject.dashboard.NewWorkspace.Stack.BLANK;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
 import com.google.inject.Inject;
-import java.net.URL;
-import java.nio.file.Paths;
 import java.util.List;
 import org.eclipse.che.selenium.core.SeleniumWebDriver;
-import org.eclipse.che.selenium.core.client.TestProjectServiceClient;
 import org.eclipse.che.selenium.core.client.TestWorkspaceServiceClient;
 import org.eclipse.che.selenium.core.user.DefaultTestUser;
 import org.eclipse.che.selenium.core.webdriver.SeleniumWebDriverHelper;
@@ -38,7 +33,6 @@ import org.eclipse.che.selenium.pageobject.dashboard.workspaces.WorkspaceConfig;
 import org.eclipse.che.selenium.pageobject.dashboard.workspaces.WorkspaceOverview;
 import org.eclipse.che.selenium.pageobject.dashboard.workspaces.WorkspaceProjects;
 import org.eclipse.che.selenium.pageobject.dashboard.workspaces.Workspaces;
-import org.eclipse.che.selenium.pageobject.dashboard.workspaces.Workspaces.Status;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
@@ -51,8 +45,6 @@ import org.testng.annotations.Test;
 public class WorkspacesListTest {
   private static final int BLANK_WS_MB = 2048;
   private static final int JAVA_WS_MB = 3072;
-  private static final int BLANK_WS_PROJECTS_COUNT = 0;
-  private static final int JAVA_WS_PROJECTS_COUNT = 1;
   private static final String EXPECTED_DOCUMENTATION_PAGE_TITLE = "Eclipse Che Documentation";
   private static final String EXPECTED_JAVA_PROJECT_NAME = "web-java-spring";
   private static final String NEWEST_CREATED_WORKSPACE_NAME = "just-created-workspace";
@@ -64,7 +56,6 @@ public class WorkspacesListTest {
   @Inject private DefaultTestUser defaultTestUser;
   @Inject private Workspaces workspaces;
   @Inject private NewWorkspace newWorkspace;
-  @Inject private TestProjectServiceClient testProjectServiceClient;
   @Inject private TestWorkspaceServiceClient testWorkspaceServiceClient;
   @Inject private SeleniumWebDriverHelper seleniumWebDriverHelper;
   @Inject private SeleniumWebDriver seleniumWebDriver;
@@ -72,13 +63,13 @@ public class WorkspacesListTest {
   @Inject private WorkspaceOverview workspaceOverview;
 
   @InjectTestWorkspace(memoryGb = 2, startAfterCreation = false)
-  private TestWorkspace blankWorkspace;
+  private TestWorkspace workspace1;
 
   @InjectTestWorkspace(memoryGb = 2, startAfterCreation = false)
   private TestWorkspace workspaceToDelete;
 
-  @InjectTestWorkspace(template = UBUNTU_JDK8, memoryGb = 3)
-  private TestWorkspace javaWorkspace;
+  @InjectTestWorkspace(memoryGb = 3, startAfterCreation = false)
+  private TestWorkspace workspace2;
 
   private Workspaces.WorkspaceListItem expectedBlankItem;
   private Workspaces.WorkspaceListItem expectedJavaItem;
@@ -86,27 +77,16 @@ public class WorkspacesListTest {
 
   @BeforeClass
   public void setUp() throws Exception {
-    URL resource = getClass().getResource("/projects/defaultSpringProjectWithDifferentTypeOfFiles");
-
-    testProjectServiceClient.importProject(
-        javaWorkspace.getId(), Paths.get(resource.toURI()), "web-java-spring", MAVEN_SPRING);
-
     expectedBlankItem =
         new Workspaces.WorkspaceListItem(
-            defaultTestUser.getName(),
-            blankWorkspace.getName(),
-            BLANK_WS_MB,
-            BLANK_WS_PROJECTS_COUNT);
+            defaultTestUser.getName(), workspace1.getName(), BLANK_WS_MB, 0);
     expectedJavaItem =
         new Workspaces.WorkspaceListItem(
-            defaultTestUser.getName(), javaWorkspace.getName(), JAVA_WS_MB, JAVA_WS_PROJECTS_COUNT);
+            defaultTestUser.getName(), workspace2.getName(), JAVA_WS_MB, 0);
 
     expectedNewestWorkspaceItem =
         new Workspaces.WorkspaceListItem(
-            defaultTestUser.getName(),
-            NEWEST_CREATED_WORKSPACE_NAME,
-            BLANK_WS_MB,
-            BLANK_WS_PROJECTS_COUNT);
+            defaultTestUser.getName(), NEWEST_CREATED_WORKSPACE_NAME, BLANK_WS_MB, 0);
 
     dashboard.open();
   }
@@ -128,80 +108,79 @@ public class WorkspacesListTest {
     workspaces.waitPageLoading();
     dashboard.waitWorkspacesCountInWorkspacesItem(getWorkspacesCount());
 
-    checkExpectedBlankWorkspaceDisplaying();
-
-    checkExpectedJavaWorkspaceDisplaying();
+    workspaces.waitWorkspaceIsPresent(workspace1.getName());
+    workspaces.waitWorkspaceIsPresent(workspace2.getName());
   }
 
   @Test
   public void checkWorkspaceSelectingByCheckbox() throws Exception {
-    String blankWorkspaceName = blankWorkspace.getName();
-    String javaWorkspaceName = javaWorkspace.getName();
+    String workspaceName1 = workspace1.getName();
+    String workspaceName2 = workspace2.getName();
 
     workspaces.waitPageLoading();
 
     // select all by bulk
     workspaces.selectAllWorkspacesByBulk();
-    workspaces.waitWorkspaceCheckboxEnabled(javaWorkspaceName);
-    workspaces.waitWorkspaceCheckboxEnabled(blankWorkspaceName);
+    workspaces.waitWorkspaceCheckboxEnabled(workspaceName2);
+    workspaces.waitWorkspaceCheckboxEnabled(workspaceName1);
     workspaces.waitBulkCheckboxEnabled();
     workspaces.waitDeleteWorkspaceBtn();
 
     // unselect all by bulk
     workspaces.selectAllWorkspacesByBulk();
-    workspaces.waitWorkspaceCheckboxDisabled(javaWorkspaceName);
-    workspaces.waitWorkspaceCheckboxDisabled(blankWorkspaceName);
+    workspaces.waitWorkspaceCheckboxDisabled(workspaceName2);
+    workspaces.waitWorkspaceCheckboxDisabled(workspaceName1);
     workspaces.waitBulkCheckboxDisabled();
     workspaces.waitDeleteWorkspaceBtnDisappearance();
 
     // select all by bulk
     workspaces.selectAllWorkspacesByBulk();
-    workspaces.waitWorkspaceCheckboxEnabled(javaWorkspaceName);
-    workspaces.waitWorkspaceCheckboxEnabled(blankWorkspaceName);
+    workspaces.waitWorkspaceCheckboxEnabled(workspaceName2);
+    workspaces.waitWorkspaceCheckboxEnabled(workspaceName1);
     workspaces.waitBulkCheckboxEnabled();
     workspaces.waitDeleteWorkspaceBtn();
 
     // unselect one checkbox
-    workspaces.selectWorkspaceByCheckbox(blankWorkspaceName);
-    workspaces.waitWorkspaceCheckboxEnabled(javaWorkspaceName);
-    workspaces.waitWorkspaceCheckboxDisabled(blankWorkspaceName);
+    workspaces.selectWorkspaceByCheckbox(workspaceName1);
+    workspaces.waitWorkspaceCheckboxEnabled(workspaceName2);
+    workspaces.waitWorkspaceCheckboxDisabled(workspaceName1);
     workspaces.waitBulkCheckboxDisabled();
     workspaces.waitDeleteWorkspaceBtn();
 
     // unselect all checkboxes
-    workspaces.selectWorkspaceByCheckbox(javaWorkspaceName);
-    workspaces.waitWorkspaceCheckboxDisabled(javaWorkspaceName);
-    workspaces.waitWorkspaceCheckboxDisabled(blankWorkspaceName);
+    workspaces.selectWorkspaceByCheckbox(workspaceName2);
+    workspaces.waitWorkspaceCheckboxDisabled(workspaceName2);
+    workspaces.waitWorkspaceCheckboxDisabled(workspaceName1);
     workspaces.waitBulkCheckboxDisabled();
 
     // for avoid of failing in the multi-thread mode when unexpected workspaces can appear in the
     // workspaces list
-    workspaces.clickOnUnexpectedWorkspacesCheckboxes(asList(blankWorkspaceName, javaWorkspaceName));
+    workspaces.clickOnUnexpectedWorkspacesCheckboxes(asList(workspaceName1, workspaceName2));
 
     workspaces.waitDeleteWorkspaceBtnDisappearance();
 
     // select one checkbox
-    workspaces.selectWorkspaceByCheckbox(blankWorkspaceName);
-    workspaces.waitWorkspaceCheckboxDisabled(javaWorkspaceName);
-    workspaces.waitWorkspaceCheckboxEnabled(blankWorkspaceName);
+    workspaces.selectWorkspaceByCheckbox(workspaceName1);
+    workspaces.waitWorkspaceCheckboxDisabled(workspaceName2);
+    workspaces.waitWorkspaceCheckboxEnabled(workspaceName1);
     workspaces.waitBulkCheckboxDisabled();
     workspaces.waitDeleteWorkspaceBtn();
 
     // select all checkboxes
-    workspaces.selectWorkspaceByCheckbox(javaWorkspaceName);
-    workspaces.waitWorkspaceCheckboxEnabled(javaWorkspaceName);
-    workspaces.waitWorkspaceCheckboxEnabled(blankWorkspaceName);
+    workspaces.selectWorkspaceByCheckbox(workspaceName2);
+    workspaces.waitWorkspaceCheckboxEnabled(workspaceName2);
+    workspaces.waitWorkspaceCheckboxEnabled(workspaceName1);
 
     // for avoid of failing in the multi-thread mode
-    workspaces.clickOnUnexpectedWorkspacesCheckboxes(asList(blankWorkspaceName, javaWorkspaceName));
+    workspaces.clickOnUnexpectedWorkspacesCheckboxes(asList(workspaceName1, workspaceName2));
 
     workspaces.waitBulkCheckboxEnabled();
     workspaces.waitDeleteWorkspaceBtn();
 
     // unselect all by bulk
     workspaces.selectAllWorkspacesByBulk();
-    workspaces.waitWorkspaceCheckboxDisabled(javaWorkspaceName);
-    workspaces.waitWorkspaceCheckboxDisabled(blankWorkspaceName);
+    workspaces.waitWorkspaceCheckboxDisabled(workspaceName2);
+    workspaces.waitWorkspaceCheckboxDisabled(workspaceName1);
     workspaces.waitBulkCheckboxDisabled();
     workspaces.waitDeleteWorkspaceBtnDisappearance();
   }
@@ -238,18 +217,6 @@ public class WorkspacesListTest {
       // remove try-catch block after issue has been resolved
       fail("Known permanent failure https://github.com/eclipse/che/issues/4242");
     }
-
-    // check items order after "Projects" clicking
-    workspaces.clickOnProjectsButton();
-    items = workspaces.getVisibleWorkspaces();
-    assertEquals(items.get(0).getProjectsAmount(), BLANK_WS_PROJECTS_COUNT);
-    assertEquals(items.get(1).getProjectsAmount(), JAVA_WS_PROJECTS_COUNT);
-
-    // check items reverse order after "Projects" clicking
-    workspaces.clickOnProjectsButton();
-    items = workspaces.getVisibleWorkspaces();
-    assertEquals(items.get(0).getProjectsAmount(), JAVA_WS_PROJECTS_COUNT);
-    assertEquals(items.get(1).getProjectsAmount(), BLANK_WS_PROJECTS_COUNT);
   }
 
   @Test
@@ -269,11 +236,6 @@ public class WorkspacesListTest {
     // check displaying list size
     workspaces.typeToSearchInput("");
     workspaces.waitVisibleWorkspacesCount(getWorkspacesCount());
-
-    // check that expected blank and java items are displaying, in sum with previous items count
-    // checking it gives a full workspaces list checking
-    checkExpectedBlankWorkspaceDisplaying();
-    checkExpectedJavaWorkspaceDisplaying();
   }
 
   @Test
@@ -312,7 +274,7 @@ public class WorkspacesListTest {
     workspaces.moveCursorToWorkspaceRamSection(expectedJavaItem.getWorkspaceName());
     workspaces.clickOnWorkspaceAddProjectButton(expectedJavaItem.getWorkspaceName());
 
-    workspaceProjects.waitProjectIsPresent(EXPECTED_JAVA_PROJECT_NAME);
+    workspaceProjects.waitSearchField();
 
     seleniumWebDriver.navigate().back();
 
@@ -325,17 +287,8 @@ public class WorkspacesListTest {
 
     seleniumWebDriver.navigate().back();
 
-    // check stop/start button
-    workspaces.waitPageLoading();
-
-    workspaces.moveCursorToWorkspaceRamSection(expectedJavaItem.getWorkspaceName());
-    workspaces.clickOnWorkspaceStopStartButton(expectedJavaItem.getWorkspaceName());
-    workspaces.waitWorkspaceStatus(expectedJavaItem.getWorkspaceName(), Status.STOPPED);
-
-    workspaces.clickOnWorkspaceStopStartButton(expectedJavaItem.getWorkspaceName());
-    workspaces.waitWorkspaceStatus(expectedJavaItem.getWorkspaceName(), Status.RUNNING);
-
     // check adding the workspace to list
+    workspaces.waitPageLoading();
     workspaces.clickOnAddWorkspaceBtn();
     newWorkspace.waitToolbar();
     newWorkspace.typeWorkspaceName(NEWEST_CREATED_WORKSPACE_NAME);
@@ -364,25 +317,6 @@ public class WorkspacesListTest {
     workspaces.clickOnDeleteButtonInDialogWindow();
 
     workspaces.waitWorkspaceIsNotPresent(workspaceToDelete.getName());
-  }
-
-  private void checkExpectedBlankWorkspaceDisplaying() {
-    List<Workspaces.WorkspaceListItem> items = workspaces.getVisibleWorkspaces();
-
-    Workspaces.WorkspaceListItem currentDisplayingBlankItem =
-        workspaces.getWorkspacesListItemByWorkspaceName(
-            items, expectedBlankItem.getWorkspaceName());
-
-    assertEquals(currentDisplayingBlankItem, expectedBlankItem);
-  }
-
-  private void checkExpectedJavaWorkspaceDisplaying() {
-    List<Workspaces.WorkspaceListItem> items = workspaces.getVisibleWorkspaces();
-
-    Workspaces.WorkspaceListItem currentDisplayingJavaItem =
-        workspaces.getWorkspacesListItemByWorkspaceName(items, expectedJavaItem.getWorkspaceName());
-
-    assertEquals(currentDisplayingJavaItem, expectedJavaItem);
   }
 
   private int getWorkspacesCount() throws Exception {

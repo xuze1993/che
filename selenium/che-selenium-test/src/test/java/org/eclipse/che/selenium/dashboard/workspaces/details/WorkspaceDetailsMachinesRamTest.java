@@ -17,7 +17,7 @@ import static org.eclipse.che.selenium.pageobject.dashboard.workspaces.Workspace
 import static org.eclipse.che.selenium.pageobject.dashboard.workspaces.WorkspaceDetails.WorkspaceDetailsTab.MACHINES;
 
 import com.google.inject.Inject;
-import org.eclipse.che.selenium.core.webdriver.SeleniumWebDriverHelper;
+import org.eclipse.che.selenium.core.workspace.InjectTestWorkspace;
 import org.eclipse.che.selenium.core.workspace.TestWorkspace;
 import org.eclipse.che.selenium.pageobject.dashboard.Dashboard;
 import org.eclipse.che.selenium.pageobject.dashboard.workspaces.WorkspaceDetails;
@@ -34,12 +34,13 @@ public class WorkspaceDetailsMachinesRamTest {
   private static final String MIN_RAM_VALID_VALUE = "0.1";
   private static final String SUCCESS_NOTIFICATION_MESSAGE = "Workspace updated.";
 
+  @InjectTestWorkspace(startAfterCreation = false)
+  private TestWorkspace testWorkspace;
+
   @Inject private Dashboard dashboard;
   @Inject private Workspaces workspaces;
   @Inject private WorkspaceDetails workspaceDetails;
   @Inject private WorkspaceDetailsMachines workspaceDetailsMachines;
-  @Inject private TestWorkspace testWorkspace;
-  @Inject private SeleniumWebDriverHelper seleniumWebDriverHelper;
 
   @BeforeClass
   public void setup() throws Exception {
@@ -97,7 +98,6 @@ public class WorkspaceDetailsMachinesRamTest {
 
     workspaceDetailsMachines.typeRamAmount(MACHINE_NAME, "3");
     workspaceDetailsMachines.waitValidRamHighlighting(MACHINE_NAME);
-    workspaceDetails.waitAllDisabled(SAVE_BUTTON);
 
     workspaceDetailsMachines.clickOnIncrementRamButton(MACHINE_NAME);
     workspaceDetails.waitAllEnabled(SAVE_BUTTON);
@@ -105,7 +105,5 @@ public class WorkspaceDetailsMachinesRamTest {
 
     workspaceDetails.waitAndClickOn(CANCEL_BUTTON);
     workspaceDetailsMachines.waitRamAmount(MACHINE_NAME, "3");
-    workspaceDetails.waitAllDisabled(SAVE_BUTTON);
-    workspaceDetails.waitAllDisabled(CANCEL_BUTTON);
   }
 }

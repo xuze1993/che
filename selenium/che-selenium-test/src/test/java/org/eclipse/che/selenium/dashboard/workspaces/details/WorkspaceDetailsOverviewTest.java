@@ -12,29 +12,25 @@
 package org.eclipse.che.selenium.dashboard.workspaces.details;
 
 import static java.util.Arrays.asList;
-import static org.eclipse.che.selenium.pageobject.dashboard.NewWorkspace.Stack.ANDROID;
-import static org.eclipse.che.selenium.pageobject.dashboard.NewWorkspace.Stack.JAVA_CENTOS;
+import static org.eclipse.che.commons.lang.NameGenerator.generate;
 import static org.openqa.selenium.Keys.ESCAPE;
 
 import com.google.inject.Inject;
 import java.util.List;
-import org.eclipse.che.commons.lang.NameGenerator;
 import org.eclipse.che.selenium.core.webdriver.SeleniumWebDriverHelper;
-import org.eclipse.che.selenium.pageobject.dashboard.AddOrImportForm;
+import org.eclipse.che.selenium.core.workspace.InjectTestWorkspace;
+import org.eclipse.che.selenium.core.workspace.TestWorkspace;
 import org.eclipse.che.selenium.pageobject.dashboard.Dashboard;
-import org.eclipse.che.selenium.pageobject.dashboard.NewWorkspace;
+import org.eclipse.che.selenium.pageobject.dashboard.workspaces.WorkspaceDetails;
 import org.eclipse.che.selenium.pageobject.dashboard.workspaces.WorkspaceOverview;
 import org.eclipse.che.selenium.pageobject.dashboard.workspaces.Workspaces;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 public class WorkspaceDetailsOverviewTest {
-  private static final String WORKSPACE_NAME = NameGenerator.generate("test-workspace", 4);
-  private static final String CHANGED_WORKSPACE_NAME = NameGenerator.generate(WORKSPACE_NAME, 4);
-  private static final String MACHINE_NAME = "dev-machine";
-  private static final String SAMPLE_NAME = "web-java-spring";
   private static final String TOO_SHORT_NAME = "wk";
-  private static final String MAX_LONG_NAME = NameGenerator.generate("wksp-", 95);
-  private static final String TOO_LONG_NAME = NameGenerator.generate(MAX_LONG_NAME, 1);
+  private static final String MAX_LONG_NAME = generate("wksp-", 95);
+  private static final String TOO_LONG_NAME = generate(MAX_LONG_NAME, 1);
   private static final String LONG_NAME_ERROR_MESSAGE =
       "The name has to be less than 101 characters long.";
   private static final String MIN_SHORT_NAME = "wks";
@@ -95,40 +91,32 @@ public class WorkspaceDetailsOverviewTest {
           + "      },\n"
           + "      \"type\": \"mvn\"\n";
 
+  private String workspaceName;
+
+  @InjectTestWorkspace(startAfterCreation = false)
+  private TestWorkspace testWorkspace;
+
   @Inject private Dashboard dashboard;
-  @Inject private NewWorkspace newWorkspace;
   @Inject private Workspaces workspaces;
-  @Inject private AddOrImportForm addOrImportForm;
+  @Inject private WorkspaceDetails workspaceDetails;
   @Inject private WorkspaceOverview workspaceOverview;
   @Inject private SeleniumWebDriverHelper seleniumWebDriverHelper;
 
-  @Test
-  public void shouldCreateWorkspaceAndOpenOverviewPage() {
-    // prepare
+  @BeforeClass
+  public void setup() throws Exception {
+    workspaceName = testWorkspace.getName();
+
     dashboard.open();
     dashboard.waitDashboardToolbarTitle();
     dashboard.selectWorkspacesItemOnDashboard();
-    workspaces.waitToolbarTitleName();
-    workspaces.clickOnAddWorkspaceBtn();
-    newWorkspace.waitPageLoad();
-    newWorkspace.typeWorkspaceName(WORKSPACE_NAME);
-    newWorkspace.clickOnAllStacksTab();
-
-    selectStackAndCheckWorkspaceName(ANDROID);
-
-    selectStackAndCheckWorkspaceName(JAVA_CENTOS);
-
-    // create workspace
-    newWorkspace.setMachineRAM(MACHINE_NAME, 3.0);
-    addOrImportForm.clickOnAddOrImportProjectButton();
-    addOrImportForm.addSampleToWorkspace(SAMPLE_NAME);
-    newWorkspace.clickOnCreateButtonAndEditWorkspace();
-    workspaceOverview.checkNameWorkspace(WORKSPACE_NAME);
+    workspaces.waitPageLoading();
+    workspaces.selectWorkspaceItemName(workspaceName);
+    workspaceDetails.waitToolbarTitleName(workspaceName);
   }
 
   @Test(priority = 2)
   public void shouldCheckNameField() {
-    workspaceOverview.waitNameFieldValue(WORKSPACE_NAME);
+    workspaceOverview.waitNameFieldValue(workspaceName);
 
     // check of empty name
     workspaceOverview.enterNameWorkspace("");
@@ -136,7 +124,7 @@ public class WorkspaceDetailsOverviewTest {
     workspaceOverview.waitDisabledSaveButton();
 
     // check too short name
-    nameShouldBeValid(CHANGED_WORKSPACE_NAME);
+    nameShouldBeValid(generate(workspaceName, 4));
     nameShouldBeInvalid(TOO_SHORT_NAME, SHORT_NAME_ERROR_MESSAGE);
 
     // check too long name
@@ -149,7 +137,7 @@ public class WorkspaceDetailsOverviewTest {
 
   @Test(priority = 1)
   public void shouldCheckExportAsFile() {
-    workspaceOverview.checkNameWorkspace(WORKSPACE_NAME);
+    workspaceOverview.checkNameWorkspace(workspaceName);
 
     // check of closing by "Esc"
     openExportWorkspaceForm();
@@ -174,12 +162,6 @@ public class WorkspaceDetailsOverviewTest {
     workspaceOverview.waitToPrivateCloudTabOpened();
     seleniumWebDriverHelper.sendKeys(ESCAPE.toString());
     workspaceOverview.waitExportWorkspaceFormClosed();
-  }
-
-  private void selectStackAndCheckWorkspaceName(NewWorkspace.Stack stack) {
-    newWorkspace.selectStack(stack);
-    newWorkspace.waitStackSelected(stack);
-    newWorkspace.waitWorkspaceNameFieldValue(WORKSPACE_NAME);
   }
 
   private void nameShouldBeValid(String name) {

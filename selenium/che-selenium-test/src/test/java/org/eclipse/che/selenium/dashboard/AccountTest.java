@@ -32,19 +32,17 @@ import org.testng.annotations.Test;
 public class AccountTest {
 
   private Account changedTestUserAccount;
+  private Account initialTestUserAccount;
   private String parentWindow;
 
   @Inject private Dashboard dashboard;
   @Inject private DashboardAccount dashboardAccount;
-
   @Inject private TestUser testUser;
-
   @Inject private KeycloakAccountPage keycloakAccount;
   @Inject private KeycloakPasswordPage keycloakPasswordPage;
   @Inject private SeleniumWebDriver seleniumWebDriver;
   @Inject private SeleniumWebDriverHelper seleniumWebDriverHelper;
   @Inject private KeycloakHeaderButtons keycloakHeaderButtons;
-  private Account initialTestUserAccount;
 
   @BeforeClass
   public void setup() {
@@ -70,6 +68,7 @@ public class AccountTest {
     parentWindow = seleniumWebDriver.getWindowHandle();
   }
 
+  @Test
   public void shouldChangeEmailFirstAndLastName() {
     dashboardAccount.getTitle().equals("Account");
     assertEquals(dashboardAccount.getAllFields(), initialTestUserAccount);
@@ -99,6 +98,7 @@ public class AccountTest {
     assertEquals(dashboardAccount.getAllFields(), changedTestUserAccount);
   }
 
+  @Test
   public void shouldChangePasswordAndCheckIt() {
     dashboard.clickOnUsernameButton();
     dashboard.clickOnAccountItem();
